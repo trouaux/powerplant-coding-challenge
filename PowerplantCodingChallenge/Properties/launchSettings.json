@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "PowerplantCodingChallenge": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "http://localhost:8888",
+      "dotnetRunMessages": true
+    }
+  }
+}
