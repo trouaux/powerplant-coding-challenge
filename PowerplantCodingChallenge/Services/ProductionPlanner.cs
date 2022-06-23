@@ -34,46 +34,65 @@ public class ProductionPlanner
 
         var load = 0;
         List<Response> results = new List<Response>();
-        foreach (var powerplant in sortedPowerplants)
+        while (true)
         {
-            //Payload samples only have int for PMin/PMax, what if a received floats with multiple decimals, 
-            //would it fail the 0.1 requirement for Load
-            if (load == payload.Load)
+            foreach (var powerplant in sortedPowerplants)
             {
-                break;
-            }
-
-            //PMax is smaller than remaining load, so we take all PMax from that powerplant
-            if (payload.Powerplants[powerplant.Key].PMax <= payload.Load - load)
-            {
-                //Could probably clean this up to one line
-                var item = new Response();
-                item.Name = payload.Powerplants[powerplant.Key].Name;
-                item.P = payload.Powerplants[powerplant.Key].PMax;
-                results.Add(item);
-                load += payload.Powerplants[powerplant.Key].PMax;
-                continue;
-            }
-
-            else
-            {
-                //We know we can't take PMax, so we take a powerplant with PMin 
-                //smaller than remaining load
-                if (payload.Powerplants[powerplant.Key].PMin > payload.Load - load)
+                //Payload samples only have int for PMin/PMax, what if a received floats with multiple decimals, 
+                //would it fail the 0.1 requirement for Load
+                if (load == payload.Load)
                 {
-                    continue;
+                    break;
                 }
-                //We use this powerplant Load to fill remaining Load
-                else
+
+                //PMax is smaller than remaining load, so we take all PMax from that powerplant
+                if (payload.Powerplants[powerplant.Key].PMax <= payload.Load - load)
                 {
                     //Could probably clean this up to one line
                     var item = new Response();
                     item.Name = payload.Powerplants[powerplant.Key].Name;
-                    item.P = payload.Load - load;
+                    item.P = payload.Powerplants[powerplant.Key].PMax;
                     results.Add(item);
-                    load += payload.Load - load;
+                    load += payload.Powerplants[powerplant.Key].PMax;
                     continue;
                 }
+
+                else
+                {
+                    //We know we can't take PMax, so we take a powerplant with PMin 
+                    //smaller than remaining load
+                    if (payload.Powerplants[powerplant.Key].PMin > payload.Load - load)
+                    {
+                        continue;
+                    }
+                    //We use this powerplant Load to fill remaining Load
+                    else
+                    {
+                        //Could probably clean this up to one line
+                        var item = new Response();
+                        item.Name = payload.Powerplants[powerplant.Key].Name;
+                        item.P = payload.Load - load;
+                        results.Add(item);
+                        load += payload.Load - load;
+                        continue;
+                    }
+                }
+            }
+
+            //This new loop + logic will remove some edge cases, but I still can think of some that could 
+            //not find a solution even if there is 
+            //!!!This logic is bad for the cheapest powerplants
+            //All I think of is adding maybe one more loop, to test more combinations but would increase complexity quite a bit
+            if (load == payload.Load)
+            {
+                break;
+            }
+            sortedPowerplants.RemoveAt(0);
+            results.Clear();
+            load = 0;
+            if(sortedPowerplants.Count == 0)
+            {
+                break;
             }
         }
 
